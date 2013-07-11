@@ -98,17 +98,6 @@ if(require.main == module) {
         doCheck(program.file, program.checks);
     } else if (program.url != undefined && program.url != "") {
         console.log("checking url");
-        var urlstr = program.url.toString();
-        var download_file = DOWNLOAD_FILE_DEFAULT;
-        rest.get(urlstr).on('complete', function(result) {
-            if (result instanceof Error) {
-                console.log('Error: ' + result.message);
-            } else {
-                fs.writeFileSync(download_file, result);
-                console.log("Downloaded " + urlstr + " to file " + download_file);
-	    }
-            doCheck(download_file, program.checks);
-        });
     }
 
 } else {
