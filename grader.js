@@ -25,10 +25,10 @@ var fs = require('fs');
 var rest = require('restler');
 var program = require('commander');
 var cheerio = require('cheerio');
-var HTMLFILE_DEFAULT = "index.html";
+var HTMLFILE_DEFAULT = ""; //"index.html";
 var CHECKSFILE_DEFAULT = "checks.json";
 var DOWNLOAD_FILE_DEFAULT = "download.html";
-var URL_DEFAULT = "http://aqueous-caverns-4679.herokuapp.com";
+var URL_DEFAULT = ""; //"http://aqueous-caverns-4679.herokuapp.com";
 
 var assertFileExists = function(infile) {
     var instr = infile.toString();
@@ -40,12 +40,18 @@ var assertFileExists = function(infile) {
 };
 
 var assertUrlExists = function(url) {
-
-    if(!fs.existsSync(DOWNLOAD_FILE_DEFAULT)) {
-        console.log("%s does not exist. Exiting.", instr);
-        process.exit(1); // http://nodejs.org/api/process.html#process_process_exit_code
-    }
-    return DOWNLOAD_FILE_DEFAULT;
+    var urlstr = url.toString();
+    var download_file = DOWNLOAD_FILE_DEFAULT;
+    rest.get(urlstr).on('complete', function(result) {
+        if (result instanceof Error) {
+            console.log('Error: ' + result.message);
+            process.exit(1); // http://nodejs.org/api/process.html#process_process_exit_code
+        } else {
+            fs.writeFileSync(download_file, result);
+            console.log("Downloaded " + urlstr + " to file " + download_file);
+        }
+        doCheck(download_file, program.checks);
+    });
 };
 
 
@@ -87,25 +93,23 @@ if(require.main == module) {
         .option('-u, --url <website>', 'Web page to check', clone(assertUrlExists), URL_DEFAULT)
         .parse(process.argv);
 
-    rest.get(program.url).on('complete', function(result) {
-        if (result instanceof Error) {
-            console.log('Error: ' + result.message);
-            this.retry(5000); // try again after 5 sec
-        } else {
-            fs.writeFileSync(DOWNLOAD_FILE_DEFAULT, result);
-            console.log("Downloaded " + program.url + " to file " + DOWNLOAD_FILE_DEFAULT);
-	}
-
-        var checkJson;
-        if (program.url != null) {
-            checkJson = checkHtmlFile(DOWNLOAD_FILE_DEFAULT, program.checks);
-        } else {
-            checkJson = checkHtmlFile(program.file, program.checks);
-        }
-
-        var outJson = JSON.stringify(checkJson, null, 4);
-        console.log(outJson);
-    });
+    if (program.file != undefined && program.file != "") {
+        console.log("checking file");
+        doCheck(program.file, program.checks);
+    } else if (program.url != undefined && program.url != "") {
+        console.log("checking url");
+        var urlstr = program.url.toString();
+        var download_file = DOWNLOAD_FILE_DEFAULT;
+        rest.get(urlstr).on('complete', function(result) {
+            if (result instanceof Error) {
+                console.log('Error: ' + result.message);
+            } else {
+                fs.writeFileSync(download_file, result);
+                console.log("Downloaded " + urlstr + " to file " + download_file);
+	    }
+            doCheck(download_file, program.checks);
+        });
+    }
 
 } else {
     exports.checkHtmlFile = checkHtmlFile;
