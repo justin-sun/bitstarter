@@ -22,10 +22,13 @@ References:
 */
 
 var fs = require('fs');
+var rest = require('restler');
 var program = require('commander');
 var cheerio = require('cheerio');
 var HTMLFILE_DEFAULT = "index.html";
 var CHECKSFILE_DEFAULT = "checks.json";
+var DOWNLOAD_FILE_DEFAULT = "download.html";
+var URL_DEFAULT = "http://aqueous-caverns-4679.herokuapp.com";
 
 var assertFileExists = function(infile) {
     var instr = infile.toString();
@@ -35,6 +38,16 @@ var assertFileExists = function(infile) {
     }
     return instr;
 };
+
+var assertUrlExists = function(url) {
+
+    if(!fs.existsSync(DOWNLOAD_FILE_DEFAULT)) {
+        console.log("%s does not exist. Exiting.", instr);
+        process.exit(1); // http://nodejs.org/api/process.html#process_process_exit_code
+    }
+    return DOWNLOAD_FILE_DEFAULT;
+};
+
 
 var cheerioHtmlFile = function(htmlfile) {
     return cheerio.load(fs.readFileSync(htmlfile));
@@ -61,14 +74,39 @@ var clone = function(fn) {
     return fn.bind({});
 };
 
+var doCheck = function(file, checks) {
+    var checkJson = checkHtmlFile(file, checks);
+    var outJson = JSON.stringify(checkJson, null, 4);
+    console.log(outJson);
+}
+
 if(require.main == module) {
     program
         .option('-c, --checks <check_file>', 'Path to checks.json', clone(assertFileExists), CHECKSFILE_DEFAULT)
         .option('-f, --file <html_file>', 'Path to index.html', clone(assertFileExists), HTMLFILE_DEFAULT)
+        .option('-u, --url <website>', 'Web page to check', clone(assertUrlExists), URL_DEFAULT)
         .parse(process.argv);
-    var checkJson = checkHtmlFile(program.file, program.checks);
-    var outJson = JSON.stringify(checkJson, null, 4);
-    console.log(outJson);
+
+    rest.get(program.url).on('complete', function(result) {
+        if (result instanceof Error) {
+            console.log('Error: ' + result.message);
+            this.retry(5000); // try again after 5 sec
+        } else {
+            fs.writeFileSync(DOWNLOAD_FILE_DEFAULT, result);
+            console.log("Downloaded " + program.url + " to file " + DOWNLOAD_FILE_DEFAULT);
+	}
+
+        var checkJson;
+        if (program.url != null) {
+            checkJson = checkHtmlFile(DOWNLOAD_FILE_DEFAULT, program.checks);
+        } else {
+            checkJson = checkHtmlFile(program.file, program.checks);
+        }
+
+        var outJson = JSON.stringify(checkJson, null, 4);
+        console.log(outJson);
+    });
+
 } else {
     exports.checkHtmlFile = checkHtmlFile;
 }
