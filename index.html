@@ -97,6 +97,12 @@
     .footer a {
       color: $ccccff;
     }
+
+    /* http://support.addthis.com/customer/portal/questions/1136093-share-buttons-in-center-position */      
+    div.addthis_toolbox {
+      width:180px;
+      margin: 0 auto;
+    }
   </style>
   </head>
   <body>
@@ -186,10 +192,16 @@
         <button class="btn btn-success btn-large">Preorder</button>
       </div>
       <div class="span8 offset2 social">
-        <!-- Social buttons are not included in default Bootstrap. -->
-        <!-- See: http:noizwaves.github.io/bootstrap-socail-buttons -->
-        <button class="btn btn-twitter"><i class="icon-twitter"></i> | Twitter </button>
-        <button class="btn btn-facebook"><i class="icon-facebook"></i> | Facebook </button>
+        <!-- AddThis Button BEGIN -->
+        <div class="addthis_toolbox addthis_floating_style addthis_counter_style" style="left:50px;top:50px;">
+        <a class="addthis_button_facebook_like" fb:like:layout="box_count"></a>
+        <a class="addthis_button_tweet" tw:count="vertical"></a>
+        <a class="addthis_button_google_plusone" g:plusone:size="tall"></a>
+        <a class="addthis_counter"></a>
+        </div>
+        <script type="text/javascript">var addthis_config = {"data_track_addressbar":true};</script>
+        <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-5201c6be51c96ed4"></script>
+        <!-- AddThis Button END -->
      </div>
    </div>
   </div>
