@@ -94,10 +94,10 @@ if(require.main == module) {
         .parse(process.argv);
 
     if (program.file != undefined && program.file != "") {
-        console.log("checking file");
+        console.log("checking file " + program.file);
         doCheck(program.file, program.checks);
     } else if (program.url != undefined && program.url != "") {
-        console.log("checking url");
+        console.log("checking url" + program.url);
     }
 
 } else {
